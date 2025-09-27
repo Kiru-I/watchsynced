@@ -1,460 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sync Watch - Watch Together</title>
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script src="https://www.youtube.com/iframe_api"></script>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
-      min-height: 100vh;
-      color: #f5f5f5;
-      overflow-x: hidden;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 40px;
-      position: relative;
-    }
-
-    .header::before {
-      content: '';
-      position: absolute;
-      top: -20px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100px;
-      height: 4px;
-      background: linear-gradient(90deg, #666, #999, #666);
-      border-radius: 2px;
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 0.6; transform: translateX(-50%) scaleX(1); }
-      50% { opacity: 1; transform: translateX(-50%) scaleX(1.1); }
-    }
-
-    h1 {
-      font-size: 3rem;
-      font-weight: 700;
-      margin-bottom: 10px;
-      background: linear-gradient(45deg, #f5f5f5, #b0b0b0);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      text-shadow: 0 4px 20px rgba(0,0,0,0.5);
-    }
-
-    .subtitle {
-      font-size: 1.2rem;
-      opacity: 0.9;
-      font-weight: 300;
-    }
-
-    .main-content {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 30px;
-      flex: 1;
-      align-items: start;
-    }
-
-    .video-section {
-      background: rgba(40, 40, 40, 0.8);
-      backdrop-filter: blur(20px);
-      border-radius: 20px;
-      padding: 30px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-      transition: transform 0.3s ease;
-    }
-
-    .video-section:hover {
-      transform: translateY(-5px);
-    }
-
-    .start-overlay {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 400px;
-      text-align: center;
-    }
-
-    .start-icon {
-      width: 80px;
-      height: 80px;
-      background: linear-gradient(45deg, #666, #999);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 30px;
-      font-size: 30px;
-      animation: float 3s ease-in-out infinite;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-    }
-
-    .start-btn {
-      background: linear-gradient(45deg, #333, #666);
-      border: none;
-      padding: 15px 40px;
-      border-radius: 50px;
-      color: white;
-      font-size: 18px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .start-btn::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-      transition: left 0.5s ease;
-    }
-
-    .start-btn:hover::before {
-      left: 100%;
-    }
-
-    .start-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
-    }
-
-    .video-player {
-      width: 100%;
-      aspect-ratio: 16/9;
-      border-radius: 15px;
-      overflow: hidden;
-      margin-bottom: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-
-    .video-controls {
-      display: flex;
-      gap: 15px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .video-input {
-      flex: 1;
-      min-width: 250px;
-      padding: 12px 20px;
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      border-radius: 25px;
-      background: rgba(0, 0, 0, 0.3);
-      color: white;
-      font-size: 14px;
-      outline: none;
-      transition: all 0.3s ease;
-    }
-
-    .video-input::placeholder {
-      color: rgba(255, 255, 255, 0.5);
-    }
-
-    .video-input:focus {
-      border-color: #888;
-      background: rgba(0, 0, 0, 0.5);
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
-    }
-
-    .change-btn {
-      background: linear-gradient(45deg, #444, #777);
-      border: none;
-      padding: 12px 25px;
-      border-radius: 25px;
-      color: white;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      white-space: nowrap;
-    }
-
-    .change-btn:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
-    }
-
-    .change-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .chat-section {
-      background: rgba(40, 40, 40, 0.8);
-      backdrop-filter: blur(20px);
-      border-radius: 20px;
-      padding: 25px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-      display: flex;
-      flex-direction: column;
-      height: fit-content;
-      max-height: 600px;
-    }
-
-    .chat-header {
-      display: flex;
-      align-items: center;
-      margin-bottom: 20px;
-      padding-bottom: 15px;
-      border-bottom: 2px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .chat-icon {
-      width: 30px;
-      height: 30px;
-      background: linear-gradient(45deg, #666, #999);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 10px;
-      font-size: 14px;
-    }
-
-    .chat-title {
-      font-size: 1.3rem;
-      font-weight: 600;
-    }
-
-    .messages {
-      flex: 1;
-      max-height: 300px;
-      overflow-y: auto;
-      margin-bottom: 20px;
-      padding: 15px;
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: 15px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .messages::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .messages::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 3px;
-    }
-
-    .messages::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.4);
-      border-radius: 3px;
-    }
-
-    .message {
-      margin-bottom: 12px;
-      padding: 10px 15px;
-      border-radius: 15px;
-      font-size: 14px;
-      line-height: 1.4;
-      animation: fadeIn 0.3s ease;
-    }
-
-    .message.own {
-      background: linear-gradient(45deg, #555, #777);
-      margin-left: 20px;
-      text-align: right;
-    }
-
-    .message.friend {
-      background: rgba(0, 0, 0, 0.3);
-      margin-right: 20px;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .chat-input-container {
-      display: flex;
-      gap: 10px;
-    }
-
-    .chat-input {
-      flex: 1;
-      padding: 12px 18px;
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      border-radius: 25px;
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
-      font-size: 14px;
-      outline: none;
-      transition: all 0.3s ease;
-    }
-
-    .chat-input::placeholder {
-      color: rgba(255, 255, 255, 0.6);
-    }
-
-    .chat-input:focus {
-      border-color: #4ecdc4;
-      background: rgba(255, 255, 255, 0.15);
-      box-shadow: 0 0 15px rgba(78, 205, 196, 0.2);
-    }
-
-    .send-btn {
-      background: linear-gradient(45deg, #4ecdc4, #44a08d);
-      border: none;
-      padding: 12px 20px;
-      border-radius: 25px;
-      color: white;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-size: 14px;
-    }
-
-    .send-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(78, 205, 196, 0.4);
-    }
-
-    .room-info {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: rgba(0, 0, 0, 0.3);
-      padding: 10px 20px;
-      border-radius: 25px;
-      font-size: 12px;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    @media (max-width: 768px) {
-      .main-content {
-        grid-template-columns: 1fr;
-        gap: 20px;
-      }
-      
-      h1 {
-        font-size: 2rem;
-      }
-      
-      .video-section, .chat-section {
-        padding: 20px;
-      }
-      
-      .video-controls {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      
-      .room-info {
-        position: relative;
-        top: 0;
-        right: 0;
-        margin-bottom: 20px;
-        text-align: center;
-      }
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .username-overlay {
-  position: fixed;
-  top:0; left:0; width:100%; height:100%;
-  background: rgba(0,0,0,0.8);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:999;
-}
-
-.username-box {
-  background: #1a1a1a;
-  padding: 40px;
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.2);
-  text-align:center;
-  box-shadow: 0 15px 30px rgba(0,0,0,0.5);
-}
-
-.username-box input {
-  padding: 12px 20px;
-  border-radius: 25px;
-  border: 2px solid rgba(255,255,255,0.2);
-  width: 200px;
-  margin-top: 20px;
-  color:white;
-  background: rgba(0,0,0,0.3);
-}
-
-.username-box button {
-  margin-top:20px;
-  padding: 12px 30px;
-  border-radius:25px;
-  border:none;
-  background: linear-gradient(45deg, #4ecdc4, #44a08d);
-  color:white;
-  font-weight:600;
-  cursor:pointer;
-}
-
-.user-list-section {
-  margin-top: 20px;
-  background: rgba(40,40,40,0.8);
-  padding: 15px;
-  border-radius:15px;
-  border: 1px solid rgba(255,255,255,0.1);
-  max-height: 250px;
-  overflow-y: auto;
-}
-
-.user-list li {
-  padding: 8px 12px;
-  border-radius: 10px;
-  margin-bottom:5px;
-  background: rgba(0,0,0,0.2);
-  list-style:none;
-}
-
-.user-list li.self {
-  font-weight:bold;
-  background: linear-gradient(45deg,#4ecdc4,#44a08d);
-}
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
@@ -473,23 +25,28 @@
       </div>
     </div>
 
+    <!-- Main Content -->
     <div class="main-content hidden" id="mainContent">
       <!-- Video Section -->
       <div class="video-section">
         <div class="start-overlay" id="startOverlay">
           <div class="start-icon">▶</div>
-          <h2 style="margin-bottom:15px;">Ready to watch together?</h2>
-          <p style="opacity:0.8;margin-bottom:30px;">Click start to begin watching</p>
+          <h2>Ready to watch together?</h2>
+          <p>Click start to begin watching</p>
           <button class="start-btn" id="startBtn">Start Watching</button>
         </div>
         <div id="videoContainer" class="hidden">
           <div id="video" class="video-player"></div>
-          <div id="bufferStatus" style="margin-top:5px;color:orange;display:none;">Buffering...</div>
-          <div class="video-controls">
-            <input id="videoIdInput" class="video-input" placeholder="Paste YouTube URL or video ID here..." />
-            <button id="changeVideoBtn" class="change-btn" disabled>Change Video</button>
-          </div>
+          <div id="bufferStatus" style="color:orange;display:none;">Buffering...</div>
         </div>
+      </div>
+
+      <!-- Queue Section -->
+      <div class="queue-section">
+        <h3>Queue</h3>
+        <ul id="queueList"></ul>
+        <input id="queueInput" placeholder="Paste YouTube URL or ID..." />
+        <button id="addQueueBtn">Add to Queue</button>
       </div>
 
       <!-- User List -->
@@ -500,10 +57,7 @@
 
       <!-- Chat Section -->
       <div class="chat-section">
-        <div class="chat-header">
-          <div class="chat-icon">💬</div>
-          <h3 class="chat-title">Live Chat</h3>
-        </div>
+        <h3>Live Chat 💬</h3>
         <div id="messages" class="messages"></div>
         <div class="chat-input-container">
           <input id="chatInput" class="chat-input" placeholder="Type a message..." />
@@ -513,218 +67,183 @@
     </div>
   </div>
 
-  <script>
-  const socket = io()
-  const urlParams = new URLSearchParams(window.location.search)
-  const room = urlParams.get("room") || "room123"
+<script>
+const socket = io()
+const urlParams = new URLSearchParams(window.location.search)
+const room = urlParams.get("room") || "room123"
 
-  let username = ""
-  let player, isRemote = false, pendingPlay = null, startClicked = false
-  let currentVideoId = null
-  const bufferStatus = document.getElementById("bufferStatus")
+let username = ""
+let player, isRemote = false, pendingPlay = null, startClicked = false
+let currentVideoId = null
 
-  document.getElementById("roomInfo").textContent = `Room: ${room}`
+document.getElementById("roomInfo").textContent = `Room: ${room}`
 
-  // Join button
-  document.getElementById("joinBtn").addEventListener("click", () => {
-    const inputName = document.getElementById("usernameInput").value.trim()
-    username = inputName || ""
-    socket.emit("join", { room, username })
-    document.getElementById("usernameOverlay").classList.add("hidden")
-    document.getElementById("mainContent").classList.remove("hidden")
-  })
+// Join Room
+document.getElementById("joinBtn").addEventListener("click", () => {
+  const inputName = document.getElementById("usernameInput").value.trim()
+  username = inputName || "Guest"
+  socket.emit("join", { room, username })
+  document.getElementById("usernameOverlay").classList.add("hidden")
+  document.getElementById("mainContent").classList.remove("hidden")
+})
 
-  // Extract video ID from YouTube URL or input
-  function extractVideoId(url) {
-    const regex = /(?:v=|\/)([a-zA-Z0-9_-]{11})/
-    const match = url.match(regex)
-    return match ? match[1] : url
-  }
+// Extract video ID
+function extractVideoId(url) {
+  const regex = /(?:v=|\/)([a-zA-Z0-9_-]{11})/
+  const match = url.match(regex)
+  return match ? match[1] : url
+}
 
-  function enableControls() {
-    document.getElementById("changeVideoBtn").disabled = false
-  }
+function onPlayerStateChange(event) {
+  if (!player || !startClicked) return
+  if (isRemote) return
 
-  function showBuffering(show) {
-    bufferStatus.style.display = show ? "block" : "none"
-  }
+  const time = player.getCurrentTime()
+  if (event.data === YT.PlayerState.PLAYING)
+    socket.emit("sync", { room, action: "play", time })
+  else if (event.data === YT.PlayerState.PAUSED)
+    socket.emit("sync", { room, action: "pause", time })
+  else if (event.data === YT.PlayerState.ENDED)
+    socket.emit("nextVideo", { room }) // auto next
+}
 
-    function onPlayerStateChange(event) {
-      if (!player || !startClicked) return;
-
-      if (isRemote) return;
-
-      const time = player.getCurrentTime();
-      if (event.data === YT.PlayerState.PLAYING)
-        socket.emit("sync", { room, action: "play", time });
-      else if (event.data === YT.PlayerState.PAUSED)
-        socket.emit("sync", { room, action: "pause", time });
-    }
-
-    socket.on("roomData", ({ videoId, users, time, isPlaying }) => {
-      currentVideoId = videoId;
-      renderUsers(users);
-      if (player && startClicked) {
-        player.loadVideoById(videoId, time || 0);
-        if (isPlaying) player.playVideo();
-        else player.pauseVideo();
-      }
-    });
-
-  // Get current room state when joining
-    socket.on("roomData", ({ videoId, users, time, isPlaying }) => {
-      currentVideoId = videoId;
-      renderUsers(users);
-      if (player && startClicked) {
-        player.loadVideoById(videoId, time || 0);
-        if (isPlaying) player.playVideo();
-        else player.pauseVideo();
-      }
-    });
-
-  // Start Watching (use current video + timestamp)
-    document.getElementById("startBtn").addEventListener("click", () => {
-      if (startClicked) return;
-      startClicked = true;
-      document.getElementById("startOverlay").classList.add("hidden");
-      document.getElementById("videoContainer").classList.remove("hidden");
-
-      player = new YT.Player("video", {
-        videoId: currentVideoId || "_zgjWHqVUKM",
-        events: {
-          onReady: () => {
-            document.getElementById("changeVideoBtn").disabled = false;
-            socket.emit("requestSync", { room });
-          },
-          onStateChange: onPlayerStateChange,
-        },
-      });
-    });
-
-  // Sync with latest state when requested
-  socket.on("syncState", ({ videoId, time, isPlaying }) => {
-    if (!player) return
-    currentVideoId = videoId
+// Room data
+socket.on("roomData", ({ videoId, users, time, isPlaying }) => {
+  currentVideoId = videoId
+  renderUsers(users)
+  if (player && startClicked) {
     player.loadVideoById(videoId, time || 0)
     if (isPlaying) player.playVideo()
     else player.pauseVideo()
+  }
+})
+
+// Start watching
+document.getElementById("startBtn").addEventListener("click", () => {
+  if (startClicked) return
+  startClicked = true
+  document.getElementById("startOverlay").classList.add("hidden")
+  document.getElementById("videoContainer").classList.remove("hidden")
+
+  player = new YT.Player("video", {
+    videoId: currentVideoId || "_zgjWHqVUKM",
+    events: {
+      onReady: () => socket.emit("requestSync", { room }),
+      onStateChange: onPlayerStateChange,
+    },
   })
+})
 
-// Remote sync events
+// Sync state
+socket.on("syncState", ({ videoId, time, isPlaying }) => {
+  if (!player) return
+  currentVideoId = videoId
+  player.loadVideoById(videoId, time || 0)
+  if (isPlaying) player.playVideo()
+  else player.pauseVideo()
+})
+
+// Sync events
 socket.on("sync", ({ action, time }) => {
-  if (!player || !startClicked) return;
-
-  // Mark as remote action to avoid feedback loop
-  isRemote = true;
-
-  const current = player.getCurrentTime();
-  const drift = Math.abs(current - time);
+  if (!player || !startClicked) return
+  isRemote = true
+  const drift = Math.abs(player.getCurrentTime() - time)
 
   if (action === "play") {
-    // If still buffering, wait before seeking/playing
-    if (player.getPlayerState() === YT.PlayerState.BUFFERING) {
-      pendingPlay = time;
-    } else {
-      // Smooth: only seek if drift > 0.3s
-      if (drift > 0.3) player.seekTo(time, true);
-      if (player.getPlayerState() !== YT.PlayerState.PLAYING) {
-        player.playVideo();
-      }
-    }
+    if (drift > 0.3) player.seekTo(time, true)
+    if (player.getPlayerState() !== YT.PlayerState.PLAYING) player.playVideo()
   } else if (action === "pause") {
-    if (drift > 0.3) player.seekTo(time, true);
-    if (player.getPlayerState() !== YT.PlayerState.PAUSED) {
-      player.pauseVideo();
-    }
+    if (drift > 0.3) player.seekTo(time, true)
+    if (player.getPlayerState() !== YT.PlayerState.PAUSED) player.pauseVideo()
   }
 
-  // Clear remote flag after a short delay
-  setTimeout(() => {
-    isRemote = false;
-  }, 100);
-});
+  setTimeout(() => { isRemote = false }, 100)
+})
 
-
-  // Remote video change
-  socket.on("videoChange", ({ videoId, time, isPlaying }) => {
-    currentVideoId = videoId;
-    if (!player || !startClicked) return;
-    isRemote = true;
-    player.loadVideoById(videoId, time || 0);
-    if (isPlaying) player.playVideo();
-    else player.pauseVideo();
-    isRemote = false;
-  });
-
-
-  // Change video (local user)
-  document.getElementById("changeVideoBtn").addEventListener("click", () => {
-    if (!player || !startClicked) return
-    const vid = extractVideoId(
-      document.getElementById("videoIdInput").value.trim()
-    )
-    if (!vid) return
-    currentVideoId = vid
-
-    // Start video immediately (instead of pausing)
-    player.loadVideoById(vid, 0)
-    player.playVideo()
-
-    socket.emit("videoChange", { room, videoId: vid })
-    document.getElementById("videoIdInput").value = ""
+// Queue update
+socket.on("queueUpdate", (queue) => {
+  const list = document.getElementById("queueList")
+  list.innerHTML = ""
+  queue.forEach((item, i) => {
+    const li = document.createElement("li")
+    li.className = "queue-item"
+    li.innerHTML = `
+      <img src="${item.thumbnail}" alt="thumb" class="thumb"/>
+      <div class="queue-text">
+        <strong>${i + 1}. ${item.title}</strong>
+        <small>${item.videoId}</small>
+      </div>
+    `
+    li.addEventListener("click", () => {
+      socket.emit("playFromQueue", { room, index: i })
+    })
+    list.appendChild(li)
   })
+})
 
-  // Chat
-  const messagesDiv = document.getElementById("messages")
-  function sendMessage() {
-    const msg = document.getElementById("chatInput").value.trim()
-    if (!msg) return
-    appendMessage(msg, username || "You")
-    socket.emit("chat", { room, message: msg, username })
-    document.getElementById("chatInput").value = ""
-  }
-  document
-    .getElementById("sendChatBtn")
-    .addEventListener("click", sendMessage)
-  document
-    .getElementById("chatInput")
-    .addEventListener("keypress", (e) => {
-      if (e.key === "Enter") sendMessage()
-    })
-  document
-    .getElementById("videoIdInput")
-    .addEventListener("keypress", (e) => {
-      if (e.key === "Enter")
-        document.getElementById("changeVideoBtn").click()
-    })
+// Video change
+socket.on("videoChange", ({ videoId, time, isPlaying }) => {
+  currentVideoId = videoId
+  if (!player || !startClicked) return
+  isRemote = true
+  player.loadVideoById(videoId, time || 0)
+  if (isPlaying) player.playVideo()
+  else player.pauseVideo()
+  isRemote = false
+})
 
-  socket.on("chat", ({ message, username: sender }) =>
-    appendMessage(message, sender)
-  )
+// Add to Queue
+document.getElementById("addQueueBtn").addEventListener("click", () => {
+  const vid = extractVideoId(document.getElementById("queueInput").value.trim())
+  if (!vid) return
+  socket.emit("addToQueue", { room, videoId: vid })
+  document.getElementById("queueInput").value = ""
+})
+document.getElementById("queueInput").addEventListener("keypress", (e) => {
+  if (e.key === "Enter") document.getElementById("addQueueBtn").click()
+})
 
-  function appendMessage(text, sender) {
-    const div = document.createElement("div")
-    div.className = "message"
-    if (sender === username) div.classList.add("own")
-    else div.classList.add("friend")
-    div.textContent = `${sender}: ${text}`
-    messagesDiv.appendChild(div)
-    messagesDiv.scrollTop = messagesDiv.scrollHeight
-  }
+// Chat
+const messagesDiv = document.getElementById("messages")
+function sendMessage() {
+  const msg = document.getElementById("chatInput").value.trim()
+  if (!msg) return
+  appendMessage(msg, username || "You")
+  socket.emit("chat", { room, message: msg, username })
+  document.getElementById("chatInput").value = ""
+}
+document.getElementById("sendChatBtn").addEventListener("click", sendMessage)
+document.getElementById("chatInput").addEventListener("keypress", (e) => {
+  if (e.key === "Enter") sendMessage()
+})
 
-  // User list
-  const userListEl = document.getElementById("userList")
-  socket.on("updateUsers", (users) => renderUsers(users))
+socket.on("chat", ({ message, username: sender }) =>
+  appendMessage(message, sender)
+)
 
-  function renderUsers(users) {
-    userListEl.innerHTML = ""
-    users.forEach((u) => {
-      const li = document.createElement("li")
-      li.textContent = u
-      if (u === username) li.classList.add("self")
-      userListEl.appendChild(li)
-    })
-  }
+function appendMessage(text, sender) {
+  const div = document.createElement("div")
+  div.className = "message"
+  if (sender === username) div.classList.add("own")
+  else div.classList.add("friend")
+  div.textContent = `${sender}: ${text}`
+  messagesDiv.appendChild(div)
+  messagesDiv.scrollTop = messagesDiv.scrollHeight
+}
+
+// User list
+const userListEl = document.getElementById("userList")
+socket.on("updateUsers", (users) => renderUsers(users))
+
+function renderUsers(users) {
+  userListEl.innerHTML = ""
+  users.forEach((u) => {
+    const li = document.createElement("li")
+    li.textContent = u
+    if (u === username) li.classList.add("self")
+    userListEl.appendChild(li)
+  })
+}
 </script>
 </body>
 </html>
