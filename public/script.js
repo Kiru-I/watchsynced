@@ -8,7 +8,6 @@ let currentVideoId = null
 
 document.getElementById("roomInfo").textContent = `Room: ${room}`
 
-// Join Room
 document.getElementById("joinBtn").addEventListener("click", () => {
   const inputName = document.getElementById("usernameInput").value.trim()
   username = inputName || "Guest"
@@ -17,7 +16,6 @@ document.getElementById("joinBtn").addEventListener("click", () => {
   document.getElementById("mainContent").classList.remove("hidden")
 })
 
-// Extract video ID
 function extractVideoId(url) {
   const regex = /(?:v=|\/)([a-zA-Z0-9_-]{11})/
   const match = url.match(regex)
@@ -37,7 +35,6 @@ function onPlayerStateChange(event) {
     socket.emit("nextVideo", { room }) // auto next
 }
 
-// Room data
 socket.on("roomData", ({ videoId, users, time, isPlaying }) => {
   currentVideoId = videoId
   renderUsers(users)
@@ -48,7 +45,6 @@ socket.on("roomData", ({ videoId, users, time, isPlaying }) => {
   }
 })
 
-// Start watching
 document.getElementById("startBtn").addEventListener("click", () => {
   if (startClicked) return
   startClicked = true
@@ -56,9 +52,8 @@ document.getElementById("startBtn").addEventListener("click", () => {
   document.getElementById("startOverlay").classList.add("hidden")
   document.getElementById("videoContainer").classList.remove("hidden")
 
-  // 1. Create player with a temporary/placeholder video
   player = new YT.Player("video", {
-    videoId: currentVideoId || "qFadbkCGBkQ", // initial placeholder
+    videoId: currentVideoId || "qFadbkCGBkQ",
     playerVars: {
       autoplay: 1,
       playsinline: 1
@@ -66,8 +61,6 @@ document.getElementById("startBtn").addEventListener("click", () => {
     events: {
       onReady: () => {
         player.playVideo()
-
-        // // 2. After 2s, load the "real" video
         // setTimeout(() => {
         //   const targetId = currentVideoId || "_zgjWHqVUKM"
         //   player.loadVideoById(targetId) // replaces video
@@ -94,10 +87,9 @@ function onPlayerStateChange(event) {
     socket.emit("sync", { room, action: "pause", time })
   } 
   else if (event.data === YT.PlayerState.ENDED) {
-    socket.emit("nextVideo", { room }) // auto next
+    socket.emit("nextVideo", { room })
   } 
   else if (event.data === YT.PlayerState.BUFFERING) {
-    // Handle stuck buffering by retrying
     setTimeout(() => {
       if (player.getPlayerState() === YT.PlayerState.BUFFERING) {
         player.playVideo()
@@ -106,7 +98,6 @@ function onPlayerStateChange(event) {
   }
 }
 
-// Sync events from server
 socket.on("sync", ({ action, time }) => {
   if (!player || !startClicked) return
   isRemote = true
@@ -126,11 +117,9 @@ socket.on("sync", ({ action, time }) => {
     }
   }
 
-  // reset remote flag after short delay
   setTimeout(() => { isRemote = false }, 200)
 })
 
-// Sync state (initial state on join)
 socket.on("syncState", ({ videoId, time, isPlaying }) => {
   if (!player) return
   currentVideoId = videoId
@@ -147,7 +136,6 @@ socket.on("syncState", ({ videoId, time, isPlaying }) => {
   setTimeout(() => { isRemote = false }, 200)
 })
 
-// Queue update
 socket.on("queueUpdate", (queue) => {
   const list = document.getElementById("queueList")
   list.innerHTML = ""
@@ -168,7 +156,6 @@ socket.on("queueUpdate", (queue) => {
   })
 })
 
-// Video change
 socket.on("videoChange", ({ videoId, time, isPlaying }) => {
   currentVideoId = videoId
   if (!player || !startClicked) return
@@ -179,7 +166,6 @@ socket.on("videoChange", ({ videoId, time, isPlaying }) => {
   isRemote = false
 })
 
-// Add to Queue
 document.getElementById("addQueueBtn").addEventListener("click", () => {
   const vid = extractVideoId(document.getElementById("queueInput").value.trim())
   if (!vid) return
@@ -190,7 +176,6 @@ document.getElementById("queueInput").addEventListener("keypress", (e) => {
   if (e.key === "Enter") document.getElementById("addQueueBtn").click()
 })
 
-// Chat
 const messagesDiv = document.getElementById("messages")
 function sendMessage() {
   const msg = document.getElementById("chatInput").value.trim()
@@ -218,7 +203,6 @@ function appendMessage(text, sender) {
   messagesDiv.scrollTop = messagesDiv.scrollHeight
 }
 
-// User list
 const userListEl = document.getElementById("userList")
 socket.on("updateUsers", (users) => renderUsers(users))
 
